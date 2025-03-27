@@ -22,10 +22,10 @@ services:
       - KC_DB_URL=jdbc:postgresql://postgres:5432/javito  # Используем имя сервиса
       - KC_DB_USERNAME=postgres
       - KC_DB_PASSWORD=postgres
-      - KC_HOSTNAME=keycloak
-      - KC_PROXY=edge
+      - KC_HOSTNAME=localhost
       - KC_DB_SCHEMA=public
       - KC_DB_INITIALIZE=true
+      - KC_HTTP_ENABLED=true
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./themes:/opt/keycloak/themes

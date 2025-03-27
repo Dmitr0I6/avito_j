@@ -51,7 +51,7 @@ export default function CreateAdvertisementForm() {
             });
 
             const response = await axios.post(
-                "http://localhost:8080/v1/advertisments",
+                "http://localhost:9000/v1/advertisments",
                 formData,
                 {
                     headers: {
