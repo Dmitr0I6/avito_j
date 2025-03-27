@@ -30,12 +30,39 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    implementation 'org.postgresql:postgresql:42.6.0'
+
+
+    runtimeOnly 'org.postgresql:postgresql:42.6.0'
     //runtimeOnly 'org.postgresql:postgresql:16.3'
+
+    //MapStruct
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    compileOnly 'org.mapstruct:mapstruct'
+    annotationProcessor 'org.mapstruct:mapstruct-processor'
+
+
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    //Cloudinary
+    implementation 'com.cloudinary:cloudinary-http5:2.2.0'
+    implementation 'io.github.cdimascio:dotenv-java:2.3.2'
+
+    //Flyway
+    implementation 'org.flywaydb:flyway-core:11.4.0'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    //Spring Security
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+    // Keycloak adapter dependencies
+    implementation 'org.keycloak:keycloak-spring-boot-starter:23.0.4'
+    implementation 'org.keycloak:keycloak-spring-security-adapter:23.0.4'
 }
 
 tasks.named('test') {
