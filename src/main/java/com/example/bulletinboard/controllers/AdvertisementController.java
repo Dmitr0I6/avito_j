@@ -13,6 +13,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,7 +60,7 @@ public class AdvertisementController {
 //        advertisementService.createAdvertisement(advertisementRequest, Arrays.stream(images).toList());
 //    }
 
-    @GetMapping(value = "update/{id}",
+    @GetMapping(value = "{id}",
             produces = {
             MediaType.APPLICATION_JSON_VALUE})
     @Operation(summary = "Поиск объявления по ID")
@@ -75,6 +76,7 @@ public class AdvertisementController {
     }
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Удаление объявления")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успех"),
@@ -88,7 +90,7 @@ public class AdvertisementController {
         advertisementService.deleteAdvertisementById(id);
     }
 
-    @PatchMapping(value = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Обновление объявления")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Объявление успешно обновлено"),

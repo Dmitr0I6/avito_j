@@ -23,4 +23,9 @@ public class UserRequest {
     @NotBlank
     private String phoneNumber;
 
+    @NotBlank
+    private String name;
+
+    @NotBlank
+    private String surname;
 }

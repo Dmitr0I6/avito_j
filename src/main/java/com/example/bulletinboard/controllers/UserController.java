@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/users")
+@RequestMapping("/api/user")
 @Tag(name = "Сервис пользователей", description = "API для работы с пользователями")
 public class UserController {
 
     private final UserService userService;
 
-    @PostMapping("/createuser")
-    @Operation(summary = "Создание пользователя")
+    @PostMapping("/register")
+    @Operation(summary = "Создание пользователя", security = {})
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Потльзователь успешно создан"),
             @ApiResponse(responseCode = "400", description = "Проверьте введенные данные"),

@@ -1,5 +1,6 @@
     package com.example.bulletinboard.config;
 
+    import lombok.extern.slf4j.Slf4j;
     import org.springframework.beans.factory.annotation.Value;
     import org.springframework.context.annotation.Bean;
     import org.springframework.context.annotation.Configuration;
@@ -15,11 +16,12 @@
     import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
     import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
     import org.springframework.security.web.SecurityFilterChain;
+    import org.springframework.web.client.RestTemplate;
 
-    import java.util.Collection;
-    import java.util.List;
-    import java.util.Map;
-
+    import java.util.*;
+    import java.util.stream.Collectors;
+    import java.util.stream.Stream;
+    @Slf4j
     @Configuration
     @EnableWebSecurity
     public class SecurityConfig {
@@ -32,8 +34,13 @@
             http
                     .csrf(csrf -> csrf.disable())
                     .authorizeHttpRequests(authorize -> authorize
-                            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                            .requestMatchers("/v1/advertisements/**").authenticated()
+                            .requestMatchers(
+                                    "/v3/api-docs/**",
+                                    "/swagger-ui/**",
+                                    "/swagger-ui.html",
+                                    "/api/user/**")
+                                    .permitAll()
+                            .requestMatchers("/v1/admin/**").hasRole("ADMIN")
                             .anyRequest().authenticated()
                     )
                     .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
@@ -74,13 +81,67 @@
             };
         }
 
+//        @Bean
+//        public JwtAuthenticationConverter authenticationConverter(
+//                Converter<Map<String, Object>, Collection<GrantedAuthority>> authoritiesConverter) {
+//            var authenticationConverter = new JwtAuthenticationConverter();
+//            authenticationConverter.setJwtGrantedAuthoritiesConverter(jwt ->
+//                    authoritiesConverter.convert(jwt.getClaims()));
+//            return authenticationConverter;
+//        }
+
         @Bean
-        public JwtAuthenticationConverter authenticationConverter(
-                Converter<Map<String, Object>, Collection<GrantedAuthority>> authoritiesConverter) {
-            var authenticationConverter = new JwtAuthenticationConverter();
-            authenticationConverter.setJwtGrantedAuthoritiesConverter(jwt ->
-                    authoritiesConverter.convert(jwt.getClaims()));
-            return authenticationConverter;
+        public JwtAuthenticationConverter jwtAuthenticationConverter() {
+            JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+            converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+                Map<String, Object> claims = jwt.getClaims();
+                List<String> allRoles = new ArrayList<>();
+
+                // 1. Извлекаем client roles (resource_access)
+                try {
+                    Map<String, Object> resourceAccess = claims.get("resource_access") instanceof Map ?
+                            (Map<String, Object>) claims.get("resource_access") : Collections.emptyMap();
+
+                    Map<String, Object> resource = resourceAccess.get(resourceClientId) instanceof Map ?
+                            (Map<String, Object>) resourceAccess.get(resourceClientId) : Collections.emptyMap();
+
+                    if (resource.get("roles") instanceof List) {
+                        @SuppressWarnings("unchecked")
+                        List<String> clientRoles = (List<String>) resource.get("roles");
+                        allRoles.addAll(clientRoles);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to extract client roles from JWT", e);
+                }
+
+                // 2. Извлекаем realm roles (realm_access)
+                try {
+                    Map<String, Object> realmAccess = claims.get("realm_access") instanceof Map ?
+                            (Map<String, Object>) claims.get("realm_access") : Collections.emptyMap();
+
+                    if (realmAccess.get("roles") instanceof List) {
+                        @SuppressWarnings("unchecked")
+                        List<String> realmRoles = (List<String>) realmAccess.get("roles");
+                        allRoles.addAll(realmRoles);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to extract realm roles from JWT", e);
+                }
+
+                // 3. Преобразуем в GrantedAuthority
+                return allRoles.stream()
+                        .filter(role -> role != null && !role.isBlank())
+                        .map(role -> "ROLE_" + role.toUpperCase())
+                        .distinct()
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+            });
+            return converter;
         }
 
+
+        @Bean
+        public RestTemplate restTemplate() {
+            return new RestTemplate();
+        }
     }

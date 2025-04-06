@@ -18,8 +18,6 @@ public interface AdvertisementMapper {
     @Mapping(target = "description", source = "advertisementRequest.description")
     @Mapping(target = "category", source = "category")
     @Mapping(target = "user", source = "user")
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     Advertisement toAdvertisement(AdvertisementRequest advertisementRequest, User user, Category category);
 
     AdvertisementResponse toAdvertisementResponse(Advertisement advertisement);

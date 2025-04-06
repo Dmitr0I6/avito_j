@@ -1,4 +1,4 @@
-ALTER TABLE ad_category ADD COLUMN parent_categ_id bigint not null;
+
 INSERT INTO ad_category (category_id,category_name, category_descr,parent_categ_id) VALUES
     --Транспорт
     (1,'Транспорт', 'К данной категории относится все транспортные средства: автомобили, мотоциклы, велосипеды, грузовой транспорт и другие.',0),

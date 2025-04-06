@@ -24,7 +24,7 @@ public class Advertisement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ad_id")
-    private long id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "category_id")

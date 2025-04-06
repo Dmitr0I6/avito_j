@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RatingRequest {
     @NotBlank
-    private User toUser;
+    private String toUsername;
 
     @NotBlank(message = "Текст отзыва не может быть пустым")
     @Size(max = 1000, message = "Отзыв слишком длинный")

@@ -63,6 +63,13 @@ dependencies {
     // Keycloak adapter dependencies
     implementation 'org.keycloak:keycloak-spring-boot-starter:23.0.4'
     implementation 'org.keycloak:keycloak-spring-security-adapter:23.0.4'
+    implementation 'org.keycloak:keycloak-admin-client:23.0.4'
+
+    implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+    implementation 'com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider:2.17.0'
+
+    //Логгирование
+    implementation 'org.slf4j:slf4j-api:2.0.0'
 }
 
 tasks.named('test') {

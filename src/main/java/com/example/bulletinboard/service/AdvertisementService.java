@@ -29,11 +29,12 @@ public class AdvertisementService {
     private final CloudinaryService cloudinary;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final CurrentUserService currentUserService;
 
     @Transactional
     public void createAdvertisement(AdvertisementRequest advertisementRequest, List<MultipartFile> images) {
         //Добавить получение пользователя, который инициировал создание объявления
-        User user = userRepository.getReferenceById(advertisementRequest.getUserId());
+        User user = userRepository.findByUsername(currentUserService.getCurrentUsername()).orElseThrow(()->new RuntimeException("User not found"));
         Category category = categoryRepository.getReferenceById(advertisementRequest.getCategory());
         Advertisement advertisement = advertisementMapper.toAdvertisement(advertisementRequest, user, category);
         advertisement.setCreatedAt(LocalDateTime.now());
@@ -59,7 +60,7 @@ public class AdvertisementService {
     }
 
     public void updateAdvertisement(Long id, AdvertisementRequest advertisementRequest, List<MultipartFile> images) {
-        User user = userRepository.getReferenceById(advertisementRequest.getUserId());
+
     }
     public void deleteAdvertisementById(Long id) {
         advertisementRepository.deleteById(id);

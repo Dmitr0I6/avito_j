@@ -13,15 +13,18 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserResponse {
-    private Long id;
+    private String id;
 
     private String username;
+
+    private String name;
+
+    private String surname;
 
     private String email;
 
     private String phoneNumber;
 
-    private Role role;
-
     private List<Rating> ratings;
+
 }

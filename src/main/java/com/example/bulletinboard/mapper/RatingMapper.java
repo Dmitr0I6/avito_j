@@ -7,6 +7,8 @@ import com.example.bulletinboard.response.RatingResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface RatingMapper {
     @Mapping(target = "id", ignore = true)
@@ -14,11 +16,12 @@ public interface RatingMapper {
     @Mapping(target = "fromUser",source = "fromUser")
     @Mapping(target = "toUser", source = "toUser")
     @Mapping(target = "rating", source = "rating.rating")
-    Rating toRating(RatingRequest rating,User toUser, User fromUser);
+    Rating toRating(RatingRequest rating,User fromUser, User toUser);
 
     //RatingRequest toRatingRequest(Rating rating);
 
     @Mapping(target = "fromUserName", source = "rating.fromUser.username")
     RatingResponse toRatingResponse(Rating rating);
 
+    List<RatingResponse> toRatingResponseList(List<Rating> list);
 }

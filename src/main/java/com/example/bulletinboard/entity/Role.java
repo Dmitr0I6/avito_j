@@ -1,5 +1,6 @@
 package com.example.bulletinboard.entity;
 
+import com.example.bulletinboard.enums.ERole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,6 +17,8 @@ public class Role {
     @Column(name = "role_id")
     private int id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role_name", nullable = false,length = 20)
-    private String name;
+    private ERole role;
 }
+

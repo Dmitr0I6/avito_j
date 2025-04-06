@@ -1,12 +1,17 @@
 import CreateAdvertisementForm from "./components/CreateAdvertisementForm";
+import AuthComponent from "./components/AuthComponent.jsx";
+import Home from "./components/Home.jsx";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
     return (
-        <div className="min-h-screen bg-gray-100 py-12">
-            <div className="container mx-auto px-4">
-                <CreateAdvertisementForm />
-            </div>
-        </div>
+        <Router>
+            <Routes>
+                <Route path="/auth" element={<AuthComponent />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/createadvertisement" element={<CreateAdvertisementForm />}/>
+            </Routes>
+        </Router>
     );
 }
 

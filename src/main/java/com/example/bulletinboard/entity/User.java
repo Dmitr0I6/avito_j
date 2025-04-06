@@ -21,7 +21,7 @@ import java.util.List;
 public class User implements UserDetails {
     @Id
     @Column(name = "user_id", nullable = false)
-    private long id;
+    private String id;
 
     @Column(name = "username", nullable = false, length = 50)
     private String username;
@@ -42,10 +42,17 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "toUser", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Rating> ratings;
 
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "surname")
+    private String surname;
+
+
     //Методы UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.getName()));
+        return List.of(new SimpleGrantedAuthority(role.getRole().toString()));
     }
 
     @Override
