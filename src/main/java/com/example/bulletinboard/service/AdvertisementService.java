@@ -4,6 +4,7 @@ import com.example.bulletinboard.entity.Advertisement;
 import com.example.bulletinboard.entity.Category;
 import com.example.bulletinboard.entity.Image;
 import com.example.bulletinboard.entity.User;
+import com.example.bulletinboard.exceptions.ResourceNotFoundException;
 import com.example.bulletinboard.mapper.AdvertisementMapper;
 import com.example.bulletinboard.repository.AdvertisementRepository;
 import com.example.bulletinboard.repository.CategoryRepository;
@@ -51,6 +52,9 @@ public class AdvertisementService {
     }
 
     public List<AdvertisementResponse> getAdvertisementList(Integer limit) {
+        if(limit == null){
+            limit = 20;
+        }
         return advertisementMapper.toAdvertisementResponses(advertisementRepository.findLastAds(limit));
     }
 
@@ -63,6 +67,33 @@ public class AdvertisementService {
 
     }
     public void deleteAdvertisementById(Long id) {
-        advertisementRepository.deleteById(id);
+        try {
+            if (advertisementRepository.existsById(id)) {
+                advertisementRepository.deleteById(id);
+            } else {
+                throw new RuntimeException("Ad with id" + id + "doesn't exist");
+            }
+        }catch (RuntimeException ex){
+
+        }
     }
+
+    public List<AdvertisementResponse> getAdvertisementsCurrentUser(){
+
+        return advertisementMapper.toAdvertisementResponses(advertisementRepository.findAllByUserId(
+                userRepository.getIdByUsername(currentUserService.getCurrentUsername())
+                        .orElseThrow(()->{return new RuntimeException("User not found");})));
+    }
+
+
+    public boolean existWithId(Long id){
+        return advertisementRepository.existsById(id);
+    }
+
+    public Advertisement getAdvertisementEntityById(Long id){
+        return advertisementRepository.findById(id).
+                orElseThrow(()->{return new ResourceNotFoundException("Advertisement not found id:"+ id);
+        });
+    }
+
 }

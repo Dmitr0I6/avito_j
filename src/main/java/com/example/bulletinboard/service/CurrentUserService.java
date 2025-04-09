@@ -8,6 +8,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CurrentUserService {
     public String getCurrentUsername() {
@@ -28,5 +30,27 @@ public class CurrentUserService {
         return ((KeycloakPrincipal<?>) authentication.getPrincipal())
                 .getKeycloakSecurityContext()
                 .getToken();
+    }
+
+    public boolean hasRole(String roleName) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            List<String> roles = jwtAuth.getToken().getClaimAsStringList("roles");
+            return roles != null && roles.contains(roleName);
+        } else if (authentication instanceof KeycloakAuthenticationToken) {
+            AccessToken token = getCurrentUserToken();
+            return token.getRealmAccess().getRoles().contains(roleName) ||
+                    token.getResourceAccess().values().stream()
+                            .anyMatch(access -> access.getRoles().contains(roleName));
+        }
+
+        return false;
+    }
+
+
+    public boolean isAdminOrModerator() {
+        return hasRole("ADMIN") || hasRole("MODERATOR");
     }
 }

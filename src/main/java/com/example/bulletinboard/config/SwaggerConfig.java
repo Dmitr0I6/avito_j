@@ -18,8 +18,6 @@ public class SwaggerConfig {
                         .version("1.0.0")
                         .description("Javito API"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
-                .paths(new Paths()
-                        .addPathItem("/v1/users/signup", new PathItem().post(new Operation())))
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth",
                                 new SecurityScheme()

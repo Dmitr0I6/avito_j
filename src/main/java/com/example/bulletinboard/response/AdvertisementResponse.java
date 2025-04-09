@@ -15,8 +15,8 @@ import java.util.List;
 @Data
 public class AdvertisementResponse {
     private long id;
-    private Category category;
-    private User user;
+    private CategoryResponse category;
+    private UserResponse user;
     private String title;
     private String description;
     private List<Image> images;

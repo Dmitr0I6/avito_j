@@ -69,7 +69,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider:2.17.0'
 
     //Логгирование
-    implementation 'org.slf4j:slf4j-api:2.0.0'
+
 }
 
 tasks.named('test') {

@@ -18,8 +18,6 @@ public interface RatingMapper {
     @Mapping(target = "rating", source = "rating.rating")
     Rating toRating(RatingRequest rating,User fromUser, User toUser);
 
-    //RatingRequest toRatingRequest(Rating rating);
-
     @Mapping(target = "fromUserName", source = "rating.fromUser.username")
     RatingResponse toRatingResponse(Rating rating);
 

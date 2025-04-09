@@ -37,32 +37,26 @@ export default function CreateAdvertisementForm() {
 
         try {
             const formData = new FormData();
-
-            // Добавляем поля формы
             formData.append("title", data.title);
             formData.append("description", data.description);
             formData.append("category", data.category);
             formData.append("price", data.price);
             formData.append("userId", data.userId);
 
-            // Добавляем файлы
             files.forEach((file) => {
                 formData.append("images", file);
             });
 
-            const response = await axios.post(
-                "http://localhost:9000/v1/advertisments",
-                formData,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                }
-            );
+            await axios.post("http://localhost:9000/v1/advertisments", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
 
             setSubmitSuccess(true);
             reset();
             setFiles([]);
+            setTimeout(() => setSubmitSuccess(false), 3000);
         } catch (err) {
             setError(err.response?.data?.message || "Ошибка при создании объявления");
         } finally {
@@ -71,121 +65,301 @@ export default function CreateAdvertisementForm() {
     };
 
     return (
-        <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6">Создать новое объявление</h2>
-
-            {submitSuccess && (
-                <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
-                    Объявление успешно создано!
-                </div>
-            )}
-
-            {error && (
-                <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-                    {error}
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2" htmlFor="title">
-                        Название
-                    </label>
-                    <input
-                        id="title"
-                        type="text"
-                        {...register("title")}
-                        className="w-full px-3 py-2 border rounded"
-                    />
-                    {errors.title && (
-                        <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
-                    )}
-                </div>
-
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2" htmlFor="description">
-                        Описание
-                    </label>
-                    <textarea
-                        id="description"
-                        {...register("description")}
-                        className="w-full px-3 py-2 border rounded"
-                        rows="4"
-                    />
-                    {errors.description && (
-                        <p className="text-red-500 text-sm mt-1">
-                            {errors.description.message}
-                        </p>
-                    )}
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            backgroundColor: '#f5f7fa',
+            padding: '20px'
+        }}>
+            <div style={{
+                width: '100%',
+                maxWidth: '600px',
+                padding: '40px',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 5px 15px rgba(0, 0, 0, 0.08)',
+                margin: '0 auto'
+            }}>
+                <div style={{
+                    textAlign: 'center',
+                    marginBottom: '30px'
+                }}>
+                    <h2 style={{
+                        fontSize: '28px',
+                        fontWeight: '600',
+                        color: '#2d3748',
+                        marginBottom: '10px'
+                    }}>
+                        Создать новое объявление
+                    </h2>
+                    <p style={{
+                        color: '#718096',
+                        fontSize: '16px'
+                    }}>
+                        Заполните все поля для публикации объявления
+                    </p>
                 </div>
 
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2" htmlFor="category">
-                        Категория (ID)
-                    </label>
-                    <input
-                        id="category"
-                        type="number"
-                        {...register("category")}
-                        className="w-full px-3 py-2 border rounded"
-                    />
-                    {errors.category && (
-                        <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
-                    )}
-                </div>
+                {submitSuccess && (
+                    <div style={{
+                        padding: '15px',
+                        backgroundColor: '#f0fdf4',
+                        color: '#16a34a',
+                        borderRadius: '8px',
+                        marginBottom: '25px',
+                        textAlign: 'center',
+                        fontSize: '15px'
+                    }}>
+                        Объявление успешно создано!
+                    </div>
+                )}
 
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2" htmlFor="price">
-                        Цена
-                    </label>
-                    <input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        {...register("price")}
-                        className="w-full px-3 py-2 border rounded"
-                    />
-                    {errors.price && (
-                        <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
-                    )}
-                </div>
+                {error && (
+                    <div style={{
+                        padding: '15px',
+                        backgroundColor: '#fee2e2',
+                        color: '#dc2626',
+                        borderRadius: '8px',
+                        marginBottom: '25px',
+                        textAlign: 'center',
+                        fontSize: '15px'
+                    }}>
+                        {error}
+                    </div>
+                )}
 
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2" htmlFor="userId">
-                        ID пользователя
-                    </label>
-                    <input
-                        id="userId"
-                        type="number"
-                        {...register("userId")}
-                        className="w-full px-3 py-2 border rounded"
-                    />
-                    {errors.userId && (
-                        <p className="text-red-500 text-sm mt-1">{errors.userId.message}</p>
-                    )}
-                </div>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '20px',
+                        marginBottom: '20px'
+                    }}>
+                        <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontWeight: '500',
+                                color: '#4a5568',
+                                fontSize: '15px'
+                            }}>
+                                Название объявления
+                            </label>
+                            <input
+                                type="text"
+                                {...register("title")}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3182ce'}
+                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                            />
+                            {errors.title && (
+                                <p style={{ color: '#dc2626', fontSize: '14px', marginTop: '4px' }}>
+                                    {errors.title.message}
+                                </p>
+                            )}
+                        </div>
 
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2" htmlFor="images">
-                        Изображения
-                    </label>
-                    <input
-                        id="images"
-                        type="file"
-                        multiple
-                        onChange={handleFileChange}
-                        className="w-full px-3 py-2 border rounded"
-                    />
-                </div>
+                        <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontWeight: '500',
+                                color: '#4a5568',
+                                fontSize: '15px'
+                            }}>
+                                Описание
+                            </label>
+                            <textarea
+                                {...register("description")}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none',
+                                    minHeight: '120px'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3182ce'}
+                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                            />
+                            {errors.description && (
+                                <p style={{ color: '#dc2626', fontSize: '14px', marginTop: '4px' }}>
+                                    {errors.description.message}
+                                </p>
+                            )}
+                        </div>
 
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:bg-blue-300"
-                >
-                    {isSubmitting ? "Отправка..." : "Создать объявление"}
-                </button>
-            </form>
+                        <div>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontWeight: '500',
+                                color: '#4a5568',
+                                fontSize: '15px'
+                            }}>
+                                Категория (ID)
+                            </label>
+                            <input
+                                type="number"
+                                {...register("category")}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3182ce'}
+                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                            />
+                            {errors.category && (
+                                <p style={{ color: '#dc2626', fontSize: '14px', marginTop: '4px' }}>
+                                    {errors.category.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontWeight: '500',
+                                color: '#4a5568',
+                                fontSize: '15px'
+                            }}>
+                                Цена
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                {...register("price")}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3182ce'}
+                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                            />
+                            {errors.price && (
+                                <p style={{ color: '#dc2626', fontSize: '14px', marginTop: '4px' }}>
+                                    {errors.price.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontWeight: '500',
+                                color: '#4a5568',
+                                fontSize: '15px'
+                            }}>
+                                ID пользователя
+                            </label>
+                            <input
+                                type="number"
+                                {...register("userId")}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3182ce'}
+                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                            />
+                            {errors.userId && (
+                                <p style={{ color: '#dc2626', fontSize: '14px', marginTop: '4px' }}>
+                                    {errors.userId.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontWeight: '500',
+                                color: '#4a5568',
+                                fontSize: '15px'
+                            }}>
+                                Изображения
+                            </label>
+                            <input
+                                type="file"
+                                multiple
+                                onChange={handleFileChange}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    boxSizing: 'border-box',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none'
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        style={{
+                            width: '100%',
+                            padding: '16px',
+                            backgroundColor: '#4299e1',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            marginTop: '15px',
+                            transition: 'background-color 0.2s, transform 0.1s'
+                        }}
+                        onMouseOver={(e) => !isSubmitting && (e.target.style.backgroundColor = '#3182ce')}
+                        onMouseOut={(e) => !isSubmitting && (e.target.style.backgroundColor = '#4299e1')}
+                        onMouseDown={(e) => !isSubmitting && (e.target.style.transform = 'scale(0.98)')}
+                        onMouseUp={(e) => !isSubmitting && (e.target.style.transform = 'scale(1)')}
+                    >
+                        {isSubmitting ? (
+                            <span>Отправка...</span>
+                        ) : (
+                            <span>Создать объявление</span>
+                        )}
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }

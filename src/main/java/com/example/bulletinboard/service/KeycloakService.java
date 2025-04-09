@@ -1,11 +1,13 @@
 package com.example.bulletinboard.service;
 
 import com.example.bulletinboard.request.UserRequest;
+import com.example.bulletinboard.response.AuthResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -14,6 +16,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -34,7 +37,7 @@ public class KeycloakService {
 
     private final RestTemplate restTemplate;
 
-    public String createUser(UserRequest userRequest) {
+    public AuthResponse createUser(UserRequest userRequest) {
         // 1. Получаем токен админа
         String adminToken = getAdminToken();
         // 2. Создаем пользователя в Keycloak
@@ -42,8 +45,9 @@ public class KeycloakService {
         // 3. Устанавливаем пароль
         setUserPassword(userId, userRequest.getPassword(), adminToken);
 
+        Map<String,String> tokens = loginUser(userRequest.getUsername(),userRequest.getPassword());
         //getRole(userId);
-        return userId;
+        return new AuthResponse(tokens.get("access_token"),tokens.get("refresh_token"),userId);
     }
 
     public String getAdminToken() {
@@ -136,6 +140,53 @@ public class KeycloakService {
                 request);
     }
 
+    public Map<String,String> loginUser(String username, String password){
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String,String> body = new LinkedMultiValueMap<>();
+        body.add("client_id",clientId);
+        body.add("client_secret",clientSecret);
+        body.add("username",username);
+        body.add("password",password);
+        body.add("grant_type","password");
+
+        HttpEntity<MultiValueMap<String,String>> request = new HttpEntity<>(body,headers);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token",
+                request,
+                Map.class);
+
+        if (response.getStatusCode() != HttpStatus.OK) {
+            throw new RuntimeException("Failed to login user");
+        }
+
+        return Map.of(
+                "access_token", (String) response.getBody().get("access_token"),
+                "refresh_token", (String) response.getBody().get("refresh_token")
+        );
+
+    }
+    public String getUserIdByUsername(String username) {
+        String adminToken = getAdminToken();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+
+        String url = authServerUrl + "/admin/realms/" + realm + "/users?username=" + username;
+        ResponseEntity<List<Map>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                new ParameterizedTypeReference<List<Map>>() {}
+        );
+
+        if (response.getBody() == null || response.getBody().isEmpty()) {
+            throw new RuntimeException("User not found");
+        }
+
+        return (String) response.getBody().get(0).get("id");
+    }
 
     public void deleteUserById(String userId) {
         String url = String.format("%s/admin/realms/%s/users/%s",
@@ -156,10 +207,7 @@ public class KeycloakService {
     }
 
 
-    @Data
-    private static class TokenResponse {
-        private String access_token;
-    }
+
 
     @Data
     @AllArgsConstructor

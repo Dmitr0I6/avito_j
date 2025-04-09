@@ -13,4 +13,7 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
 
     @Query(value = "SELECT * FROM advertisement ORDER BY created_at DESC LIMIT :limit", nativeQuery = true)
     List<Advertisement> findLastAds(@Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM advertisement WHERE user_id = :id ORDER BY created_at DESC ", nativeQuery = true)
+    List<Advertisement> findAllByUserId(@Param("id") String id);
 }

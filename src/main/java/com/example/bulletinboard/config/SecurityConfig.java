@@ -12,6 +12,8 @@
     import org.springframework.security.config.http.SessionCreationPolicy;
     import org.springframework.security.core.GrantedAuthority;
     import org.springframework.security.core.authority.SimpleGrantedAuthority;
+    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+    import org.springframework.security.crypto.password.PasswordEncoder;
     import org.springframework.security.oauth2.jwt.JwtDecoder;
     import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
     import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -43,11 +45,17 @@
                             .requestMatchers("/v1/admin/**").hasRole("ADMIN")
                             .anyRequest().authenticated()
                     )
-                    .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
+                    .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {jwt.jwtAuthenticationConverter(jwtAuthenticationConverter());
                     }))
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
             return http.build();
+        }
+
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+            // Используем bcrypt с силой 12 (рекомендуется)
+            return new BCryptPasswordEncoder(12);
         }
 
         @Bean
@@ -68,18 +76,47 @@
         }
 
         @Bean
-        public AuthoritiesConverter resourceAccessRolesAuthoritiesConverter() {
+        AuthoritiesConverter resourceAccessRolesAuthoritiesConverter() {
             return claims -> {
-                var resourceAccess = (Map<String, Object>) claims.get("resource_access");
-                var resourceAccessObject = (Map<String, Object>) resourceAccess.get(resourceClientId);
-                var resourceRoles = (List<String>) resourceAccessObject.get("roles");
+                try {
+                    // 1. Извлекаем client roles (resource_access)
+                    Map<String, Object> resourceAccess = claims.get("resource_access") instanceof Map ?
+                            (Map<String, Object>) claims.get("resource_access") : Collections.emptyMap();
 
-                return resourceRoles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .map(GrantedAuthority.class::cast)
-                        .toList();
+                    Map<String, Object> resource = resourceAccess.get(resourceClientId) instanceof Map ?
+                            (Map<String, Object>) resourceAccess.get(resourceClientId) : Collections.emptyMap();
+
+                    if (resource.get("roles") instanceof List) {
+                        @SuppressWarnings("unchecked")
+                        List<String> clientRoles = (List<String>) resource.get("roles");
+
+                        // 2. Преобразуем в GrantedAuthority
+                        return clientRoles.stream()
+                                .filter(role -> role != null && !role.isBlank())
+                                .map(role -> "ROLE_" + role.toUpperCase()) // добавляем префикс ROLE_
+                                .distinct()
+                                .map(SimpleGrantedAuthority::new)
+                                .collect(Collectors.toList());
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to extract client roles from JWT", e);
+                }
+                return Collections.emptyList(); // возвращаем пустой список в случае ошибки
             };
         }
+//        @Bean
+//        public AuthoritiesConverter resourceAccessRolesAuthoritiesConverter() {
+//            return claims -> {
+//                var resourceAccess = (Map<String, Object>) claims.get("resource_access");
+//                var resourceAccessObject = (Map<String, Object>) resourceAccess.get(resourceClientId);
+//                var resourceRoles = (List<String>) resourceAccessObject.get("roles");
+//
+//                return resourceRoles.stream()
+//                        .map(SimpleGrantedAuthority::new)
+//                        .map(GrantedAuthority.class::cast)
+//                        .toList();
+//            };
+//        }
 
 //        @Bean
 //        public JwtAuthenticationConverter authenticationConverter(

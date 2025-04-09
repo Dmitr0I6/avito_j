@@ -13,7 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserResponse {
-    private String id;
 
     private String username;
 
@@ -25,6 +24,5 @@ public class UserResponse {
 
     private String phoneNumber;
 
-    private List<Rating> ratings;
-
+    private List<RatingResponse> ratings;
 }

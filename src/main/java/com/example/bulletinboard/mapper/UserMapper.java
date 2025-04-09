@@ -13,7 +13,8 @@ import java.util.List;
 public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", ignore = true)
-    @Mapping(target = "ratings",ignore = true)
+    @Mapping(target = "ratings", ignore = true)
+    @Mapping(target = "password", ignore = true)
     User toUser(UserRequest userRequest);
 
     UserResponse toUserResponse(User user);

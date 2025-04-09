@@ -41,6 +41,19 @@ public class AdvertisementController {
         return advertisementService.getAdvertisementList(limit);
     }
 
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/current-user")
+    @Operation(summary = "Получение объявлений текущего пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Данные успешно получены"),
+            @ApiResponse(responseCode = "400", description = "Неверно переданные данные"),
+            @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    public List<AdvertisementResponse> getAdvertisementsCurrentUser(){
+        return advertisementService.getAdvertisementsCurrentUser();
+    }
+
 
     @PostMapping(path = "createad",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Создание объявления")
@@ -50,15 +63,8 @@ public class AdvertisementController {
             @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
     })
     public void createAdvertisement(@ModelAttribute AdvertisementRequest advertisementRequest) {
-        // Логика обработки объявления и изображений
         advertisementService.createAdvertisement(advertisementRequest, advertisementRequest.getImages());
     }
-//    public void createAdvertisement(
-//            @RequestPart @Parameter(description = "Advertisement data", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)) AdvertisementRequest advertisementRequest,
-//            @RequestPart @Parameter(description = "Upload images", content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) MultipartFile[] images) {
-//  
-//        advertisementService.createAdvertisement(advertisementRequest, Arrays.stream(images).toList());
-//    }
 
     @GetMapping(value = "{id}",
             produces = {
