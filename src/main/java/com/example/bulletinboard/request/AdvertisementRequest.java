@@ -2,7 +2,9 @@ package com.example.bulletinboard.request;
 
 
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,13 +22,14 @@ public class AdvertisementRequest {
     private String title;
 
     @NotBlank
+
     private String description;
 
-    @NotBlank
+    @NotNull
     private Long category;
 
     @Positive
-    @NotBlank
+    @NotNull
     private double price;
 
     private List<MultipartFile> images;

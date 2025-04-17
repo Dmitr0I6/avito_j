@@ -8,6 +8,7 @@ import com.example.bulletinboard.request.CategoryRequest;
 import com.example.bulletinboard.response.CategoryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -22,12 +23,18 @@ public class CategoryService {
     public List<CategoryResponse> getAllCategories(){
         List<Category>  categoryList = categoryRepository.getAllCategories();
 
-        return null;
+        return categoryMapper.toCategoryResponseList(categoryList);
     }
 
+    @Transactional
     public void createCategory(CategoryRequest categoryRequest){
-        Integer parentCategoryId = categoryRepository.getCategoryIdByName(categoryRequest.getCategoryName());
-        categoryRepository.save(categoryMapper.toCategory(categoryRequest,parentCategoryId));
+
+        Category categoryParent = categoryRepository.findByCategoryNameIgnoreCase(categoryRequest.getParentCategoryName())
+                .orElseThrow(()->new RuntimeException("Category did not exist with name"+ categoryRequest.getCategoryName()));
+        Long newId = categoryRepository.findMaxId().orElse(0L) + 1;
+        Category category = categoryMapper.toCategory(categoryRequest,categoryParent.getId());
+        category.setId(newId);
+        categoryRepository.save(category);
     }
 
     public CategoryResponse getCategory(Long id){

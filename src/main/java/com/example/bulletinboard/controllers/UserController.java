@@ -1,7 +1,9 @@
 package com.example.bulletinboard.controllers;
 
 import com.example.bulletinboard.request.LoginRequest;
+import com.example.bulletinboard.request.UserInfoUpdateRequest;
 import com.example.bulletinboard.request.UserRequest;
+import com.example.bulletinboard.request.UserAuthUpdateRequest;
 import com.example.bulletinboard.response.AuthResponse;
 import com.example.bulletinboard.response.UserResponse;
 import com.example.bulletinboard.service.UserService;
@@ -12,7 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -23,16 +28,17 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    @Operation(summary = "Создание пользователя", security = {})
+    @Operation(summary = "Создание пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Потльзователь успешно создан"),
             @ApiResponse(responseCode = "400", description = "Проверьте введенные данные"),
             @ApiResponse(responseCode = "500",description = "Ошибка работы сервиса")
     })
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse createUser(@RequestBody UserRequest userRequest) {
+    public AuthResponse createUser(@Valid @RequestBody UserRequest userRequest) {
         return userService.createUser(userRequest);
     }
+
 
     @Operation(summary = "Вход в систему")
     @PostMapping("/login")
@@ -46,6 +52,8 @@ public class UserController {
         return userService.loginUser(loginRequest);
     }
 
+
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Получение пользователя по ID")
     @GetMapping("{id}")
     @ApiResponses(value = {
@@ -54,11 +62,13 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
     })
     @ResponseStatus(HttpStatus.OK)
-    public UserResponse getUserById(@PathVariable Long id) {
+    public UserResponse getUserById(@PathVariable String id) {
         return userService.findUserById(id);
     }
 
-    @DeleteMapping("{id}")
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/delete/{id}")
     @Operation(summary = "Удаление пользователя")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",description = "Пользовалель удален"),
@@ -66,7 +76,50 @@ public class UserController {
             @ApiResponse(responseCode = "500",description = "Ошибка работы сервиса")
     })
     @ResponseStatus(HttpStatus.OK)
-    public void deleteUserById(@PathVariable Long id){
+    public void deleteUserById(@PathVariable String id){
         userService.deleteUser(id);
     }
+
+    @PreAuthorize("hasAnyRole('USER')")
+    @PatchMapping("/update-password")
+    @Operation(summary = "Обновление пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",description = "Пользовалель удален"),
+            @ApiResponse(responseCode = "400",description = "Ошибка, проверьте введенные данные"),
+            @ApiResponse(responseCode = "500",description = "Ошибка работы сервиса")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    public void updateUserAuth(
+             @Valid @RequestBody UserAuthUpdateRequest userUpdateAuth){
+        userService.updateUserAuth(userUpdateAuth);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/get-all-users")
+    @Operation(summary = "Получение всех пользователей")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",description = "Пользовалель удален"),
+            @ApiResponse(responseCode = "400",description = "Ошибка, проверьте введенные данные"),
+            @ApiResponse(responseCode = "500",description = "Ошибка работы сервиса")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserResponse> getAllUsers(){
+        return userService.findAllUsers();
+    }
+
+    @PreAuthorize("hasAnyRole('USER')")
+    @PatchMapping("/update-info")
+    @Operation(summary = "Обновление пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",description = "Пользовалель удален"),
+            @ApiResponse(responseCode = "400",description = "Ошибка, проверьте введенные данные"),
+            @ApiResponse(responseCode = "500",description = "Ошибка работы сервиса")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    public UserResponse updateUserInfo(
+            @Valid @RequestBody UserInfoUpdateRequest userUpdateInfo){
+        return userService.updateUserInfo(userUpdateInfo);
+    }
+
+
 }

@@ -12,7 +12,7 @@ import java.util.List;
 public interface CategoryMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "parentCategoryId", source = "parentCategoryId")
-    Category toCategory(CategoryRequest categoryRequest, Integer parentCategoryId);
+    Category toCategory(CategoryRequest categoryRequest, Long parentCategoryId);
 
     CategoryResponse toCategoryResponse(Category category);
 

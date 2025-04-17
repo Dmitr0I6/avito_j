@@ -8,12 +8,14 @@ import com.example.bulletinboard.mapper.UserMapper;
 import com.example.bulletinboard.repository.RoleRepository;
 import com.example.bulletinboard.repository.UserRepository;
 import com.example.bulletinboard.request.LoginRequest;
+import com.example.bulletinboard.request.UserAuthUpdateRequest;
+import com.example.bulletinboard.request.UserInfoUpdateRequest;
 import com.example.bulletinboard.request.UserRequest;
 import com.example.bulletinboard.response.AuthResponse;
 import com.example.bulletinboard.response.UserResponse;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.sql.ast.tree.from.TableReference;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.keycloak.representations.AccessToken;
@@ -24,6 +26,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 
@@ -43,16 +46,18 @@ public class UserService {
     private final PlatformTransactionManager transactionManager;
     private final PasswordEncoder passwordEncoder;
 
-    public UserResponse findUserById(long id) {
+
+    public UserResponse findUserById(String id) {
         Optional<User> userOptional = userRepository.findById(id);
         return userOptional.map(userMapper::toUserResponse).orElse(null);
     }
 
     public AuthResponse createUser(UserRequest userRequest) {
         TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
-        AuthResponse keycloakUser = keycloakService.createUser(userRequest);
+        AuthResponse keycloakUser = null;
 
         try {
+            keycloakUser = keycloakService.createUser(userRequest);
             User user = userMapper.toUser(userRequest);
             user.setId(keycloakUser.getUserId());
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
@@ -64,7 +69,7 @@ public class UserService {
             return keycloakUser;
         } catch (Exception e) {
             transactionManager.rollback(status);
-            if (keycloakUser.getUserId() != null) {
+            if (keycloakUser != null && keycloakUser.getUserId() != null) {
                 try {
                     keycloakService.deleteUserById(keycloakUser.getUserId());
                 } catch (Exception ex) {
@@ -82,11 +87,18 @@ public class UserService {
                 keycloakService.getUserIdByUsername(loginRequest.getUsername()));
     }
 
-    public void updateUser(UserRequest userRequest) {
-    }
 
-    public void deleteUser(long id) {
-        userRepository.deleteById(id);
+
+    public void deleteUser(String id) {
+        try {
+
+            keycloakService.deleteUserById(id);
+            userRepository.deleteById(id);
+            log.debug("пользователь полностью удален");
+        } catch (Exception e){
+            log.error("Ошибка удаления пользователя\n" );
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     public List<UserResponse> findAllUsers() {
@@ -105,6 +117,17 @@ public class UserService {
         if (authentication instanceof JwtAuthenticationToken) {
             JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
             return jwtAuth.getToken().getClaimAsString("preferred_username"); // Или другой claim
+        }
+
+        throw new IllegalStateException("Unsupported authentication type");
+    }
+
+    public String getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            return jwtAuth.getToken().getClaimAsString("sub"); // Или другой claim
         }
 
         throw new IllegalStateException("Unsupported authentication type");
@@ -136,22 +159,97 @@ public class UserService {
         return false;
     }
 
+    @Transactional(rollbackFor = Exception.class)  // Откатывает транзакцию при любом исключении
+    public void updateUserAuth(UserAuthUpdateRequest userAuthUpdateRequest) {
+
+        boolean passwordUpdated = false;
+        User user = getCurrentUser();
+
+        try {
+
+
+            // Обновление пароля (если изменился)
+            if (userAuthUpdateRequest.getPassword() != null &&
+                    !passwordEncoder.matches(userAuthUpdateRequest.getPassword(), user.getPassword())) {
+
+                String newPassword = passwordEncoder.encode(userAuthUpdateRequest.getPassword());
+                user.setPassword(newPassword);
+                keycloakService.setUserPassword(user.getId(), userAuthUpdateRequest.getPassword());
+                passwordUpdated = true;
+            }
+
+            // Сохраняем изменения в БД (если были обновления)
+            if (passwordUpdated) {
+                userRepository.save(user);
+            }
+
+        } catch (Exception e) {
+            // Логируем ошибку
+            log.error("Failed to update user auth data: {}", e.getMessage());
+
+            // Откатываем изменения в Keycloak (если они были)
+            try {
+                if (passwordUpdated) {
+                    keycloakService.setUserPassword(user.getId(), "old_password_not_stored"); // Проблема: старый пароль не хранится
+                }
+            } catch (Exception ex) {
+                log.error("Failed to rollback Keycloak changes: {}", ex.getMessage());
+            }
+
+            // Пробрасываем исключение, чтобы Spring откатил транзакцию БД
+            throw new RuntimeException("Failed to update user password", e);
+        }
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponse updateUserInfo(UserInfoUpdateRequest userInfoUpdateRequest) {
+        User user = getCurrentUser();
+        String originalEmail = user.getEmail(); // Сохраняем оригинальный email для отката
+
+        try {
+            // Обновляем данные в базе
+            user.setEmail(userInfoUpdateRequest.getEmail());
+            user.setPhoneNumber(userInfoUpdateRequest.getPhoneNumber());
+            user.setName(userInfoUpdateRequest.getName());
+            user.setSurname(userInfoUpdateRequest.getSurname());
+
+            // Сохраняем в БД
+            User updatedUser = userRepository.save(user);
+
+            // Обновляем данные в Keycloak
+            keycloakService.updateUserInfo(
+                    user.getId(), // ID пользователя в Keycloak
+                    userInfoUpdateRequest
+            );
+
+            return userMapper.toUserResponse(updatedUser);
+
+        } catch (Exception e) {
+            // Откатываем изменения email в случае ошибки
+            user.setEmail(originalEmail);
+            userRepository.save(user);
+
+            log.error("Failed to update user info in Keycloak: {}", e.getMessage());
+            throw new RuntimeException("Failed to update user information", e);
+        }
+    }
+
 
     public boolean isAdminOrModerator() {
         return hasRole("ADMIN") || hasRole("MODERATOR");
     }
 
 
-    public String getCurrentUserId(){
-        return userRepository.findByUsername(getCurrentUsername())
-                .orElseThrow(()-> new ResourceNotFoundException("User not found")
-                ).getId();
-    }
-
     public User getCurrentUser(){
-        return userRepository.findByUsername(getCurrentUsername())
+
+        return userRepository.findById(getCurrentUserId())
                 .orElseThrow(()-> new ResourceNotFoundException("User not found")
                 );
+    }
+
+    public User getUserById(String id){
+        return userRepository.findById(id).orElseThrow(()->{return new ResourceNotFoundException("User not found");});
     }
 
 }

@@ -18,11 +18,4 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query(value = "SELECT * FROM comments WHERE ad_id = :ad ORDER BY created_at", nativeQuery = true)
     List<Comment> getCommentsByAdvertisementId(@Param("ad") Long adId);
 
-    @Modifying
-    @Transactional
-    @Query(value = "DELETE FROM Comment WHERE id = :id")
-    Void deleteCommentById(@Param("id") Long id);
-
-
-
 }

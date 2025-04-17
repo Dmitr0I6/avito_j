@@ -34,5 +34,5 @@ public class Rating {
     private int rating;
 
     @Column(name = "created_at")
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 }

@@ -40,7 +40,9 @@
                                     "/v3/api-docs/**",
                                     "/swagger-ui/**",
                                     "/swagger-ui.html",
-                                    "/api/user/**")
+                                    "/api/user/login",
+                                    "/api/user/register",
+                                    "/api/advertisement/page")
                                     .permitAll()
                             .requestMatchers("/v1/admin/**").hasRole("ADMIN")
                             .anyRequest().authenticated()

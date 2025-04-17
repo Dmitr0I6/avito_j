@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -83,7 +84,7 @@ public class CommentController {
             @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
     })
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateComment(@PathVariable Long id, @RequestBody CommentUpdateRequest commentUpdateRequest) {
+    public void updateComment(@PathVariable Long id, @Valid @RequestBody CommentUpdateRequest commentUpdateRequest) {
         commentService.updateCommentById(id, commentUpdateRequest);
     }
 

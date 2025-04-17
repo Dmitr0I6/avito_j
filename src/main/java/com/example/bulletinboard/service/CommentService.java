@@ -57,9 +57,7 @@ public class CommentService {
     @Transactional
     public List<CommentResponse> getAllCommentsByUser() {
         List<Comment> comments = commentRepository.getCommentsByAuthorId(
-                userService.getUserByUsername(
-                        userService.getCurrentUsername()
-                ).getId()
+                userService.getCurrentUserId()
         );
         return commentMapper.toCommentResponses(comments);
     }
@@ -70,7 +68,10 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + id));
         if (comment.getAuthor().getId().equals(userService.getCurrentUserId()) || userService.isAdminOrModerator()
         ) {
-            commentRepository.deleteCommentById(id);
+            commentRepository.deleteById(id);
+        }
+        else {
+            throw new RuntimeException("Fail to delete comment");
         }
     }
 
@@ -79,10 +80,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(id).
                 orElseThrow(()->{return new ResourceNotFoundException("Comment not found with id:" + id);}
                 );
-
         comment.setText(commentUpdateRequest.getText());
         return commentMapper.toCommentResponse(commentRepository.save(comment));
-
-
     }
 }

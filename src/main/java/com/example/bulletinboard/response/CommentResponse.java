@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CommentResponse {
-    private long id;
+    private Long id;
 
-    private Advertisement advertisement;
+    private Long advertisement;
 
-    private User author;
+    private String user;
 
     private String text;
 

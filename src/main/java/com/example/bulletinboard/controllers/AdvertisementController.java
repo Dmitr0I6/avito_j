@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/advertisement")
+@RequestMapping("/api/advertisement")
 @Tag(name = "Сервис объявлений", description = "API для работы с объявлениями")
 public class AdvertisementController {
 
@@ -54,7 +55,7 @@ public class AdvertisementController {
         return advertisementService.getAdvertisementsCurrentUser();
     }
 
-
+    @PreAuthorize("hasRole('USER')")
     @PostMapping(path = "createad",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Создание объявления")
     @ApiResponses(value = {
@@ -62,7 +63,7 @@ public class AdvertisementController {
             @ApiResponse(responseCode = "400", description = "Проверьте введенные данные"),
             @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
     })
-    public void createAdvertisement(@ModelAttribute AdvertisementRequest advertisementRequest) {
+    public void createAdvertisement(@Valid @ModelAttribute AdvertisementRequest advertisementRequest) {
         advertisementService.createAdvertisement(advertisementRequest, advertisementRequest.getImages());
     }
 

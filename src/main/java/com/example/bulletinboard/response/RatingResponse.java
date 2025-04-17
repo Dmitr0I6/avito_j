@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class RatingResponse {
     private Long id;
-    private Long fromUserId;
+    private String fromUserId;
     private String fromUserName;
     private String text;
-    private int rating;
+    private Integer rating;
     private LocalDateTime createdAt;
 }

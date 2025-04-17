@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,14 +43,14 @@ public class CategoryController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("add-category")
-    @Operation(summary = "Добавление категорий")
+    @Operation(summary = "Добавление категории")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Данные успешно добавлены"),
             @ApiResponse(responseCode = "400", description = "Неверно переданные данные"),
             @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
     })
     @ResponseStatus(HttpStatus.CREATED)
-    public void createCategory(@RequestBody CategoryRequest categoryRequest){
+    public void createCategory(@Valid @RequestBody CategoryRequest categoryRequest){
         categoryService.createCategory(categoryRequest);
     }
 
@@ -75,7 +76,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
     })
     @ResponseStatus(HttpStatus.OK)
-    public CategoryResponse updateCategory(@PathVariable Long id, @RequestBody Map<String, Object> updates){
+    public CategoryResponse updateCategory(@PathVariable Long id, @Valid @RequestBody Map<String, Object> updates){
         return categoryService.updateCategory(id, updates);
     }
     @PreAuthorize("hasRole('ADMIN')")
