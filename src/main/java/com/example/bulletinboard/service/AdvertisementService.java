@@ -68,14 +68,10 @@ public class AdvertisementService {
 
     }
     public void deleteAdvertisementById(Long id) {
-        try {
-            if (advertisementRepository.existsById(id)) {
-                advertisementRepository.deleteById(id);
-            } else {
-                throw new RuntimeException("Ad with id" + id + "doesn't exist");
-            }
-        }catch (RuntimeException ex){
-
+        if (advertisementRepository.existsById(id)) {
+            advertisementRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Ad with id" + id + "doesn't exist");
         }
     }
 
