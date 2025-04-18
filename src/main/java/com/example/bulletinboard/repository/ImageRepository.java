@@ -1,10 +1,10 @@
 package com.example.bulletinboard.repository;
 
-import com.example.bulletinboard.entity.Advertisement;
+import com.example.bulletinboard.entity.Image;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AdvertismentRepository extends JpaRepository<Advertisement, Long> {
+public interface ImageRepository extends JpaRepository<Image,Long> {
 
 }

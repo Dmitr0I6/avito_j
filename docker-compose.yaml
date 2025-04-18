@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      - POSTGRES_DB=javito
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/javito  # Используем имя сервиса
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=postgres
+      - KC_HOSTNAME=localhost
+      - KC_DB_SCHEMA=public
+      - KC_DB_INITIALIZE=true
+      - KC_HTTP_ENABLED=true
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./themes:/opt/keycloak/themes
+    command: ["start-dev"]
+    ports:
+      - "8080:8080"  # Лучше использовать стандартный порт
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  keycloak_data:
