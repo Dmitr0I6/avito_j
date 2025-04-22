@@ -43,31 +43,61 @@ public class KeycloakService {
 
     private final RestTemplate restTemplate;
 
-public AuthResponse createUser(UserRequest userRequest) {
-    String adminToken = null;
-    String userId = null;
-
-    try {
-        adminToken = getAdminToken();
-        userId = createKeycloakUser(userRequest, adminToken);
+    public AuthResponse createUser(UserRequest userRequest) {
+        String adminToken = null;
+        String userId = null;
 
         try {
-            setUserPassword(userId, userRequest.getPassword(), adminToken);
-            assignClientRoleToUser(userId, ERole.ROLE_USER);
-            Map<String, String> tokens = loginUser(userRequest.getUsername(), userRequest.getPassword());
+            adminToken = getAdminToken();
+            userId = createKeycloakUser(userRequest, adminToken);
 
-            return new AuthResponse(tokens.get("access_token"), tokens.get("refresh_token"), userId);
+            try {
+                setUserPassword(userId, userRequest.getPassword(), adminToken);
+
+                assignClientRoleToUser(userId, ERole.ROLE_USER);
+
+                Map<String, String> tokens = loginUser(userRequest.getUsername(), userRequest.getPassword());
+
+                return new AuthResponse(tokens.get("access_token"), tokens.get("refresh_token"), userId);
+
+            } catch (Exception e) {
+                // Удаляем пользователя при ошибке после создания
+                deleteUserById(userId);
+                throw new RuntimeException("User setup failed: " + e.getMessage(), e);
+            }
 
         } catch (Exception e) {
-            // Удаляем пользователя при ошибке после создания
-            deleteUserById(userId);
-            throw new RuntimeException("User setup failed: " + e.getMessage(), e);
+            throw new RuntimeException("User creation failed: " + e.getMessage(), e);
         }
-
-    } catch (Exception e) {
-        throw new RuntimeException("User creation failed: " + e.getMessage(), e);
     }
-}
+
+    public AuthResponse createModerator(UserRequest userRequest) {
+        String adminToken = null;
+        String userId = null;
+
+        try {
+            adminToken = getAdminToken();
+            userId = createKeycloakUser(userRequest, adminToken);
+
+            try {
+                setUserPassword(userId, userRequest.getPassword(), adminToken);
+
+                assignClientRoleToUser(userId, ERole.ROLE_MODERATOR);
+
+                Map<String, String> tokens = loginUser(userRequest.getUsername(), userRequest.getPassword());
+
+                return new AuthResponse(tokens.get("access_token"), tokens.get("refresh_token"), userId);
+
+            } catch (Exception e) {
+                // Удаляем пользователя при ошибке после создания
+                deleteUserById(userId);
+                throw new RuntimeException("User setup failed: " + e.getMessage(), e);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("User creation failed: " + e.getMessage(), e);
+        }
+    }
 
     private String getAdminToken() {
         HttpHeaders headers = new HttpHeaders();
@@ -87,7 +117,7 @@ public AuthResponse createUser(UserRequest userRequest) {
         return (String) response.getBody().get("access_token");
     }
 
-    public String getRole(String userId){
+    public String getRole(String userId) {
         String adminToken = getAdminToken();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -102,6 +132,34 @@ public AuthResponse createUser(UserRequest userRequest) {
         RoleRepresentation[] userRoles = rolesResponse.getBody();
         System.out.println(userRoles.toString());
         return userRoles.toString();
+    }
+
+    public Map<String, String> refreshToken(String refreshToken) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("refresh_token", refreshToken);
+        body.add("grant_type", "refresh_token");
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token",
+                request,
+                Map.class);
+
+        if (response.getStatusCode() != HttpStatus.OK) {
+            throw new RuntimeException("Failed to login user");
+        }
+
+        return Map.of(
+                "access_token", (String) response.getBody().get("access_token"),
+                "refresh_token", (String) response.getBody().get("refresh_token")
+        );
     }
 
     private String createKeycloakUser(UserRequest userRequest, String adminToken) {
@@ -176,7 +234,7 @@ public AuthResponse createUser(UserRequest userRequest) {
                 request);
     }
 
-    private boolean isUsernameExists(String username,String adminToken){
+    private boolean isUsernameExists(String username, String adminToken) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(adminToken);
@@ -197,8 +255,7 @@ public AuthResponse createUser(UserRequest userRequest) {
     }
 
 
-
-    private UserRepresentation getUserById(String userId){
+    private UserRepresentation getUserById(String userId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(getAdminToken());
 
@@ -210,6 +267,7 @@ public AuthResponse createUser(UserRequest userRequest) {
 
         return response.getBody();
     }
+
     public void updateUserInfo(String userId, UserInfoUpdateRequest userInfoUpdateRequest) {
         // 1. Get user by ID endpoint
         String userUrl = authServerUrl + "/admin/realms/" + realm + "/users/" + userId;
@@ -233,7 +291,7 @@ public AuthResponse createUser(UserRequest userRequest) {
             if (userInfoUpdateRequest.getSurname() != null) {
                 userUpdate.setLastName(userInfoUpdateRequest.getSurname());
             }
-             userUpdate.setEmailVerified(true);
+            userUpdate.setEmailVerified(true);
 
             // 3. Execute PUT request
             restTemplate.exchange(
@@ -249,18 +307,18 @@ public AuthResponse createUser(UserRequest userRequest) {
         }
     }
 
-    public Map<String,String> loginUser(String username, String password){
+    public Map<String, String> loginUser(String username, String password) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String,String> body = new LinkedMultiValueMap<>();
-        body.add("client_id",clientId);
-        body.add("client_secret",clientSecret);
-        body.add("username",username);
-        body.add("password",password);
-        body.add("grant_type","password");
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("username", username);
+        body.add("password", password);
+        body.add("grant_type", "password");
 
-        HttpEntity<MultiValueMap<String,String>> request = new HttpEntity<>(body,headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<Map> response = restTemplate.postForEntity(
                 authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token",
@@ -277,6 +335,7 @@ public AuthResponse createUser(UserRequest userRequest) {
         );
 
     }
+
     public String getUserIdByUsername(String username) {
         String adminToken = getAdminToken();
         HttpHeaders headers = new HttpHeaders();
@@ -287,7 +346,8 @@ public AuthResponse createUser(UserRequest userRequest) {
                 url,
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                new ParameterizedTypeReference<List<Map>>() {}
+                new ParameterizedTypeReference<List<Map>>() {
+                }
         );
 
         if (response.getBody() == null || response.getBody().isEmpty()) {
@@ -327,7 +387,7 @@ public AuthResponse createUser(UserRequest userRequest) {
         String roleId = getClientRoleId(clientUuid, role.name().substring(5), adminToken);
 
         // 4. Назначаем роль пользователю
-        assignRoleToUser(userId, clientUuid, roleId, adminToken,role);
+        assignRoleToUser(userId, clientUuid, roleId, adminToken, role);
     }
 
     private String getClientUuid(String adminToken) {
@@ -336,14 +396,15 @@ public AuthResponse createUser(UserRequest userRequest) {
             headers.setBearerAuth(adminToken);
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
-            String url = authServerUrl + "/admin/realms/" + realm + "/clients?clientId="+clientId;
+            String url = authServerUrl + "/admin/realms/" + realm + "/clients?clientId=" + clientId;
             System.out.println("Request URL: " + url);
 
             ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
-                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                    }
             );
 
             if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null || response.getBody().isEmpty()) {
@@ -400,7 +461,7 @@ public AuthResponse createUser(UserRequest userRequest) {
 
     @Data
     @AllArgsConstructor
-    private static class KeycloakUserRequest {
+    static class KeycloakUserRequest {
         private String username;
         private String email;
         private String firstName;

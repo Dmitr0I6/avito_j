@@ -12,8 +12,11 @@ import java.util.List;
 public interface AdvertisementRepository extends JpaRepository<Advertisement, Long> {
 
     @Query(value = "SELECT * FROM advertisement ORDER BY created_at DESC LIMIT :limit", nativeQuery = true)
-    List<Advertisement> findLastAds(@Param("limit") int limit);
+    List<Advertisement> findLastAds(@Param("limit") Integer limit);
 
     @Query(value = "SELECT * FROM advertisement WHERE user_id = :id ORDER BY created_at DESC ", nativeQuery = true)
     List<Advertisement> findAllByUserId(@Param("id") String id);
+
+    @Query(value = "SELECT * FROM advertisement WHERE category_id = :category ORDER BY created_at DESC LIMIT :limit", nativeQuery = true)
+    List<Advertisement> findByCategoryId(@Param("category") Long category, @Param("limit") Integer limit);
 }

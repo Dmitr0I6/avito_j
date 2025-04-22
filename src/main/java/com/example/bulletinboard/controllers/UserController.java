@@ -1,9 +1,6 @@
 package com.example.bulletinboard.controllers;
 
-import com.example.bulletinboard.request.LoginRequest;
-import com.example.bulletinboard.request.UserInfoUpdateRequest;
-import com.example.bulletinboard.request.UserRequest;
-import com.example.bulletinboard.request.UserAuthUpdateRequest;
+import com.example.bulletinboard.request.*;
 import com.example.bulletinboard.response.AuthResponse;
 import com.example.bulletinboard.response.UserResponse;
 import com.example.bulletinboard.service.UserService;
@@ -15,10 +12,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/user")
@@ -52,6 +51,18 @@ public class UserController {
         return userService.loginUser(loginRequest);
     }
 
+
+    @Operation(summary = "Обновление токена")
+    @PostMapping("/refresh")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+            @ApiResponse(responseCode = "400", description = "Проверьте введенные данные"),
+            @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    public AuthResponse refreshToken(@Valid @RequestBody RefreshRequest refreshRequest) {
+        return userService.refreshAccessToken(refreshRequest);
+    }
 
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Получение пользователя по ID")
@@ -122,4 +133,16 @@ public class UserController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/createmoderator")
+    @Operation(summary = "Создание пользователя с правами модератора")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",description = "Пользователь создан"),
+            @ApiResponse(responseCode = "400",description = "Ошибка, проверьте введенные данные"),
+            @ApiResponse(responseCode = "500",description = "Ошибка работы сервиса")
+    })
+    @ResponseStatus(HttpStatus.CREATED)
+    public AuthResponse createModerator(@Valid @RequestBody UserRequest userRequest){
+        return userService.createModerator(userRequest);
+    }
 }

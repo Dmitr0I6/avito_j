@@ -1,5 +1,10 @@
+
+
+
 import React, { useState } from 'react';
+
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const AuthComponent = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +19,18 @@ const AuthComponent = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    // Функция для сохранения данных аутентификации
+    const saveAuthData = (authData) => {
+        // Сохраняем в localStorage
+        localStorage.setItem('accessToken', authData.accessToken);
+        localStorage.setItem('refreshToken', authData.refreshToken);
+        localStorage.setItem('userId', authData.userId);
+        localStorage.setItem('userData', JSON.stringify(authData.user));
+
+        // Устанавливаем токен в axios для всех последующих запросов
+        axios.defaults.headers.common['Authorization'] = `Bearer ${authData.accessToken}`;
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -26,69 +43,50 @@ const AuthComponent = () => {
         e.preventDefault();
         setError('');
 
-        // Валидация полей при регистрации
-        if (!isLogin) {
-            if (!formData.name.trim() || !formData.surname.trim()) {
-                setError('Имя и фамилия обязательны для заполнения');
-                return;
-            }
+        if (!isLogin && (!formData.name.trim() || !formData.surname.trim())) {
+            setError('Имя и фамилия обязательны для заполнения');
+            return;
         }
 
-        const endpoint = isLogin
-            ? 'http://localhost:9000/api/user/login'
-            : 'http://localhost:9000/api/user/register';
-
-        // Формируем payload с проверкой значений
-        const payload = isLogin
-            ? {
-                username: formData.username.trim(),
-                password: formData.password.trim()
-            }
-            : {
-                name: formData.name.trim(),
-                surname: formData.surname.trim(),
-                username: formData.username.trim(),
-                password: formData.password.trim(),
-                email: formData.email.trim(),
-                phoneNumber: formData.phoneNumber.trim()
-            };
-
-        console.log('Отправляемые данные:', payload); // Логируем данные перед отправкой
-
         try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const endpoint = isLogin
+                ? 'http://localhost:9000/api/user/login'
+                : 'http://localhost:9000/api/user/register';
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                try {
-                    const errorData = JSON.parse(errorText);
-                    throw new Error(errorData.message || 'Ошибка аутентификации');
-                } catch {
-                    throw new Error(errorText || `Ошибка сервера: ${response.status}`);
+            const payload = isLogin
+                ? {
+                    username: formData.username.trim(),
+                    password: formData.password.trim()
                 }
+                : {
+                    name: formData.name.trim(),
+                    surname: formData.surname.trim(),
+                    username: formData.username.trim(),
+                    password: formData.password.trim(),
+                    email: formData.email.trim(),
+                    phoneNumber: formData.phoneNumber.trim()
+                };
+
+            const response = await axios.post(endpoint, payload);
+
+            if (response.data) {
+                // Сохраняем данные аутентификации
+                saveAuthData({
+                    accessToken: response.data.accessToken,
+                    refreshToken: response.data.refreshToken,
+                    userId: response.data.userId,
+                    user: {
+                        username: formData.username,
+                        name: formData.name,
+                        surname: formData.surname,
+                        email: formData.email
+                    }
+                });
+
+                navigate('/');
             }
-
-            const data = await response.json();
-            console.log('Ответ сервера:', data); // Логируем ответ сервера
-
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('username', formData.username);
-                if (!isLogin) {
-                    localStorage.setItem('name', formData.name);
-                    localStorage.setItem('surname', formData.surname);
-                }
-            }
-
-            navigate('/');
         } catch (err) {
-            setError(err.message || 'Произошла ошибка при авторизации');
+            setError(err.response?.data?.message || 'Произошла ошибка при авторизации');
             console.error('Ошибка авторизации:', err);
         }
     };

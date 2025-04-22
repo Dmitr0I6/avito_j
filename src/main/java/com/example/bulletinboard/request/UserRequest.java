@@ -33,4 +33,5 @@ public class UserRequest {
 
     @NotBlank
     private String surname;
+
 }

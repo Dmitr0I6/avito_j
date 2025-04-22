@@ -10,6 +10,7 @@ import com.example.bulletinboard.repository.AdvertisementRepository;
 import com.example.bulletinboard.repository.CategoryRepository;
 import com.example.bulletinboard.repository.UserRepository;
 import com.example.bulletinboard.request.AdvertisementRequest;
+import com.example.bulletinboard.request.AdvertisementUpdateRequest;
 import com.example.bulletinboard.response.AdvertisementResponse;
 
 import jakarta.transaction.Transactional;
@@ -30,8 +31,18 @@ public class AdvertisementService {
     private final CloudinaryService cloudinary;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     private final UserService userService;
+
+    @Transactional
+    public List<AdvertisementResponse> getAdvertisementsByCategory(String categoryName){
+        Category category = categoryService.getCategoryByName(categoryName);
+        Integer limit = 60;
+        List<Advertisement> advertisementList = advertisementRepository.findByCategoryId(category.getId(), limit);
+        return advertisementMapper.toAdvertisementResponses(advertisementList);
+    }
+
 
     @Transactional
     public void createAdvertisement(AdvertisementRequest advertisementRequest, List<MultipartFile> images) {
@@ -64,7 +75,7 @@ public class AdvertisementService {
         return advertisement.map(advertisementMapper::toAdvertisementResponse).orElse(null);
     }
 
-    public void updateAdvertisement(Long id, AdvertisementRequest advertisementRequest, List<MultipartFile> images) {
+    public void updateAdvertisement(Long id, AdvertisementUpdateRequest advertisementUpdateRequest, List<MultipartFile> images) {
 
     }
     public void deleteAdvertisementById(Long id) {

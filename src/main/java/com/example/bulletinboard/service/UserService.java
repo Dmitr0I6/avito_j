@@ -7,10 +7,7 @@ import com.example.bulletinboard.exceptions.UserCreationException;
 import com.example.bulletinboard.mapper.UserMapper;
 import com.example.bulletinboard.repository.RoleRepository;
 import com.example.bulletinboard.repository.UserRepository;
-import com.example.bulletinboard.request.LoginRequest;
-import com.example.bulletinboard.request.UserAuthUpdateRequest;
-import com.example.bulletinboard.request.UserInfoUpdateRequest;
-import com.example.bulletinboard.request.UserRequest;
+import com.example.bulletinboard.request.*;
 import com.example.bulletinboard.response.AuthResponse;
 import com.example.bulletinboard.response.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +19,8 @@ import org.keycloak.representations.AccessToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -34,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -45,7 +45,7 @@ public class UserService {
     private final KeycloakService keycloakService;
     private final PlatformTransactionManager transactionManager;
     private final PasswordEncoder passwordEncoder;
-
+    private final JwtDecoder jwtDecoder; 
 
     public UserResponse findUserById(String id) {
         Optional<User> userOptional = userRepository.findById(id);
@@ -132,6 +132,16 @@ public class UserService {
 
         throw new IllegalStateException("Unsupported authentication type");
     }
+    public String getUserIdFromToken(String token) {
+
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("Token cannot be null or empty");
+        }
+
+        Jwt jwt = jwtDecoder.decode(token);
+        return jwt.getClaim("sub");
+    }
+
 
     public AccessToken getCurrentUserToken() {
         KeycloakAuthenticationToken authentication =
@@ -235,6 +245,11 @@ public class UserService {
         }
     }
 
+    public AuthResponse refreshAccessToken(RefreshRequest refreshRequest){
+        Map<String, String> tokens = keycloakService.refreshToken(refreshRequest.getRefreshToken());
+
+        return new AuthResponse(tokens.get("access_token"),tokens.get("refresh_token"),getUserIdFromToken(tokens.get("access_token")));
+    }
 
     public boolean isAdminOrModerator() {
         return hasRole("ADMIN") || hasRole("MODERATOR");
@@ -242,7 +257,6 @@ public class UserService {
 
 
     public User getCurrentUser(){
-
         return userRepository.findById(getCurrentUserId())
                 .orElseThrow(()-> new ResourceNotFoundException("User not found")
                 );
@@ -250,6 +264,34 @@ public class UserService {
 
     public User getUserById(String id){
         return userRepository.findById(id).orElseThrow(()->{return new ResourceNotFoundException("User not found");});
+    }
+
+    public AuthResponse createModerator(UserRequest userRequest){
+        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        AuthResponse keycloakUser = null;
+
+        try {
+            keycloakUser = keycloakService.createModerator(userRequest);
+            User user = userMapper.toUser(userRequest);
+            user.setId(keycloakUser.getUserId());
+            user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+            roleRepository.findById(2).ifPresent(user::setRole);
+
+            userRepository.save(user);
+
+            transactionManager.commit(status);
+            return keycloakUser;
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+            if (keycloakUser != null && keycloakUser.getUserId() != null) {
+                try {
+                    keycloakService.deleteUserById(keycloakUser.getUserId());
+                } catch (Exception ex) {
+                    log.error("Failed to rollback keycloak user creation", ex);
+                }
+            }
+            throw new UserCreationException("Failed to create user" + e.getMessage(), e);
+        }
     }
 
 }
