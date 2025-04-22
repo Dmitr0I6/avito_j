@@ -1,7 +1,7 @@
 # 🚀 Javito Platform API
 
 ![Swagger UI](https://img.shields.io/badge/Swagger-UI-%23Clojure?style=flat&logo=swagger)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.3-green)
 ![Java](https://img.shields.io/badge/Java-17-blue)
 
 Платформа для объявлений с системой комментариев, рейтингов и категорий
@@ -98,7 +98,7 @@ docker-compose up --build
 
 3. Доступ к API:
 ```
-http://localhost:8080
+http://localhost:9000
 ```
 
 ## 📜 Лицензия
