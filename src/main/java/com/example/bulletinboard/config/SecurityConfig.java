@@ -22,7 +22,6 @@
 
     import java.util.*;
     import java.util.stream.Collectors;
-    import java.util.stream.Stream;
     @Slf4j
     @Configuration
     @EnableWebSecurity
@@ -42,9 +41,12 @@
                                     "/swagger-ui.html",
                                     "/api/user/login",
                                     "/api/user/register",
-                                    "/api/advertisement/page")
+                                    "/api/user/refresh",
+                                    "/api/category/all",
+                                    "/api/advertisement/get/**",
+                                    "/api/advertisement/page",
+                                    "/api/advertisement/getpage/**")
                                     .permitAll()
-                            .requestMatchers("/v1/admin/**").hasRole("ADMIN")
                             .anyRequest().authenticated()
                     )
                     .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {jwt.jwtAuthenticationConverter(jwtAuthenticationConverter());

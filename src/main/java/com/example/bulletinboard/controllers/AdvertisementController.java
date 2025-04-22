@@ -1,6 +1,7 @@
 package com.example.bulletinboard.controllers;
 
 import com.example.bulletinboard.request.AdvertisementRequest;
+import com.example.bulletinboard.request.AdvertisementUpdateRequest;
 import com.example.bulletinboard.response.AdvertisementResponse;
 import com.example.bulletinboard.service.AdvertisementService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +58,7 @@ public class AdvertisementController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @PostMapping(path = "createad",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/createad",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Создание объявления")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Объявление создано"),
@@ -67,7 +69,8 @@ public class AdvertisementController {
         advertisementService.createAdvertisement(advertisementRequest, advertisementRequest.getImages());
     }
 
-    @GetMapping(value = "{id}",
+    @PreAuthorize("hasAnyRole('USER','MODERATOR','ADMIN')")
+    @GetMapping(value = "/get/{id}",
             produces = {
             MediaType.APPLICATION_JSON_VALUE})
     @Operation(summary = "Поиск объявления по ID")
@@ -111,10 +114,26 @@ public class AdvertisementController {
             @PathVariable @PositiveOrZero Long id,
 
             @Parameter(description = "Данные для обновления объявления")
-            @ModelAttribute AdvertisementRequest advertisementRequest) {
+            @ModelAttribute AdvertisementUpdateRequest advertisementUpdateRequest) {
 
-        advertisementService.updateAdvertisement(id, advertisementRequest, advertisementRequest.getImages());
+        advertisementService.updateAdvertisement(id, advertisementUpdateRequest, advertisementUpdateRequest.getImages());
     }
+
+    @GetMapping("/getpage/{category}")
+    @Operation(summary = "Получение объявлений по категории")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успех"),
+            @ApiResponse(responseCode = "400", description = "Неверно переданные данные"),
+            @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
+    })
+    @ResponseStatus(HttpStatus.OK)
+    public List<AdvertisementResponse> getAdvertisementByCategory(
+            @Parameter(description = "Категория объявления")
+            @PathVariable @NotBlank String category) {
+        return advertisementService.getAdvertisementsByCategory(category);
+    }
+
+
 }
 
 

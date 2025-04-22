@@ -1,12 +1,13 @@
 .home-container {
-    max-width: 1200px;
+
     width: 1200px;
-    margin: 0 100px;
+    margin: 0 130px;
     padding: 20px;
 
 }
 
 .home-header {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;

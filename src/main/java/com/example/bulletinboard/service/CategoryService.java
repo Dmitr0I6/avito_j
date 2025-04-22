@@ -68,4 +68,14 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
+    public Category getCategoryById(Long id){
+        return categoryRepository.findById(id).
+                orElseThrow(()-> new ResourceNotFoundException("Category not found exception"));
+    }
+
+    public Category getCategoryByName(String name){
+        return categoryRepository.findByCategoryNameIgnoreCase(name)
+                .orElseThrow(()->new ResourceNotFoundException("Category with name"+ name+ "not found"));
+    }
+
 }

@@ -1,4 +1,23 @@
 services:
+  app:
+    build: .
+    ports:
+      - "9000:9000"
+    depends_on:
+      - postgres
+      - keycloak
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/javito
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      #
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: bulletin-board
+      KEYCLOAK_CLIENT_ID: spring-bulletin-board
+      KEYCLOAK_CLIENT_SECRET: c9UotXvigAOObcNgIBLiAP2LtedQayVf
+    networks:
+      - my-network
+
   postgres:
     image: postgres:16
     container_name: postgres
@@ -11,6 +30,8 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
+    networks:
+      - my-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
@@ -35,7 +56,11 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    networks:
+      - my-network
 
 volumes:
   postgres_data:
   keycloak_data:
+networks:
+  my-network:
