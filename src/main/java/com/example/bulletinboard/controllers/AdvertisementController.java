@@ -99,7 +99,7 @@ public class AdvertisementController {
             @PathVariable @PositiveOrZero Long id) {
         advertisementService.deleteAdvertisementById(id);
     }
-
+    @PreAuthorize("hasAnyRole('USER','MODERATOR','ADMIN')")
     @PatchMapping(value = "update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Обновление объявления")
     @ApiResponses(value = {

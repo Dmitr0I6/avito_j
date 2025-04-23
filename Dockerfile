@@ -14,10 +14,8 @@ COPY .env .
 
 # Собираем приложение с помощью Gradle
 RUN ./gradlew build -x test --no-daemon
-
 # Используем базовый образ для запуска приложения
 FROM eclipse-temurin:17-jre-jammy
-
 # Устанавливаем рабочую директорию
 WORKDIR /app
 COPY --from=builder /app/.env .
