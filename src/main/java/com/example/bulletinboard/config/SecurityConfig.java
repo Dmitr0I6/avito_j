@@ -9,6 +9,7 @@
     import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
     import org.springframework.security.config.annotation.web.builders.HttpSecurity;
     import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+    import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
     import org.springframework.security.config.http.SessionCreationPolicy;
     import org.springframework.security.core.GrantedAuthority;
     import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,10 +23,16 @@
 
     import java.util.*;
     import java.util.stream.Collectors;
+
+    import static org.springframework.security.config.Customizer.withDefaults;
+
     @Slf4j
     @Configuration
     @EnableWebSecurity
     public class SecurityConfig {
+
+        @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+        private String resourceServer;
 
         @Value("${keycloak.resource}")
         private String resourceClientId;
@@ -33,7 +40,8 @@
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
             http
-                    .csrf(csrf -> csrf.disable())
+                    .cors(withDefaults())
+                    .csrf(AbstractHttpConfigurer::disable)
                     .authorizeHttpRequests(authorize -> authorize
                             .requestMatchers(
                                     "/v3/api-docs/**",
@@ -58,7 +66,6 @@
 
         @Bean
         public PasswordEncoder passwordEncoder() {
-            // Используем bcrypt с силой 12 (рекомендуется)
             return new BCryptPasswordEncoder(12);
         }
 
@@ -72,7 +79,7 @@
         }
         @Bean
         public JwtDecoder jwtDecoder() {
-            return NimbusJwtDecoder.withJwkSetUri("http://localhost:8080/realms/bulletin-board/protocol/openid-connect/certs")
+            return NimbusJwtDecoder.withJwkSetUri(resourceServer + "/protocol/openid-connect/certs")
                     .build();
         }
 
@@ -108,28 +115,6 @@
                 return Collections.emptyList(); // возвращаем пустой список в случае ошибки
             };
         }
-//        @Bean
-//        public AuthoritiesConverter resourceAccessRolesAuthoritiesConverter() {
-//            return claims -> {
-//                var resourceAccess = (Map<String, Object>) claims.get("resource_access");
-//                var resourceAccessObject = (Map<String, Object>) resourceAccess.get(resourceClientId);
-//                var resourceRoles = (List<String>) resourceAccessObject.get("roles");
-//
-//                return resourceRoles.stream()
-//                        .map(SimpleGrantedAuthority::new)
-//                        .map(GrantedAuthority.class::cast)
-//                        .toList();
-//            };
-//        }
-
-//        @Bean
-//        public JwtAuthenticationConverter authenticationConverter(
-//                Converter<Map<String, Object>, Collection<GrantedAuthority>> authoritiesConverter) {
-//            var authenticationConverter = new JwtAuthenticationConverter();
-//            authenticationConverter.setJwtGrantedAuthoritiesConverter(jwt ->
-//                    authoritiesConverter.convert(jwt.getClaims()));
-//            return authenticationConverter;
-//        }
 
         @Bean
         public JwtAuthenticationConverter jwtAuthenticationConverter() {
