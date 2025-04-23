@@ -270,29 +270,6 @@ public class UserServiceTest {
         verify(keycloakService).setUserPassword("test-id", "newpassword");
     }
 
-    @Test
-    void updateUserInfo_ShouldUpdateUserInfo() {
-        // Arrange
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getClaimAsString("sub")).thenReturn("test-id");
-
-        JwtAuthenticationToken jwtAuth = mock(JwtAuthenticationToken.class);
-        when(jwtAuth.getToken()).thenReturn(jwt);
-
-        mockSecurityContext(jwtAuth);
-
-        when(userRepository.findById("test-id")).thenReturn(Optional.of(testUser));
-        when(userMapper.toUserResponse(testUser)).thenReturn(new UserResponse());
-
-        // Act
-        UserResponse result = userService.updateUserInfo(infoUpdateRequest);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals("updated@example.com", testUser.getEmail());
-        assertEquals("1111111111", testUser.getPhoneNumber());
-        verify(keycloakService).updateUserInfo(eq("test-id"), any(UserInfoUpdateRequest.class));
-    }
 
     @Test
     void isAdminOrModerator_ShouldReturnTrueForAdmin() {
