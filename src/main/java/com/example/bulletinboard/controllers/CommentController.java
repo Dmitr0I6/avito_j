@@ -24,6 +24,7 @@ public class CommentController {
 
     private final CommentService commentService;
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/create-comment")
     @Operation(summary = "Создание комментария")
     @ApiResponses(value = {
@@ -49,7 +50,7 @@ public class CommentController {
         return commentService.getAllCommentsByUser();
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','MODERATOR')")
     @GetMapping("/{adId}")
     @Operation(summary = "Получение комментариев текущего объявления")
     @ApiResponses(value = {
@@ -83,7 +84,7 @@ public class CommentController {
             @ApiResponse(responseCode = "400", description = "Проверьте введенные данные"),
             @ApiResponse(responseCode = "500", description = "Ошибка работы сервиса")
     })
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void updateComment(@PathVariable Long id, @Valid @RequestBody CommentUpdateRequest commentUpdateRequest) {
         commentService.updateCommentById(id, commentUpdateRequest);
     }

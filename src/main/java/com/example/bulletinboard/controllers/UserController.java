@@ -106,7 +106,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/get-all-users")
+    @GetMapping("/all-users")
     @Operation(summary = "Получение всех пользователей")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",description = "Пользовалель удален"),
@@ -118,7 +118,7 @@ public class UserController {
         return userService.findAllUsers();
     }
 
-    @PreAuthorize("hasAnyRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','MODERATOR')")
     @PatchMapping("/update-info")
     @Operation(summary = "Обновление пользователя")
     @ApiResponses(value = {

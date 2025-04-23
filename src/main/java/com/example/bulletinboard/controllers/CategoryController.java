@@ -42,7 +42,7 @@ public class CategoryController {
 
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("add-category")
+    @PostMapping("/add-category")
     @Operation(summary = "Добавление категории")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Данные успешно добавлены"),
