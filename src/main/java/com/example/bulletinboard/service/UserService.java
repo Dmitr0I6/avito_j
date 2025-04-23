@@ -219,10 +219,18 @@ public class UserService {
 
         try {
             // Обновляем данные в базе
-            user.setEmail(userInfoUpdateRequest.getEmail());
-            user.setPhoneNumber(userInfoUpdateRequest.getPhoneNumber());
-            user.setName(userInfoUpdateRequest.getName());
-            user.setSurname(userInfoUpdateRequest.getSurname());
+            if (userInfoUpdateRequest.getEmail() != null && !userInfoUpdateRequest.getEmail().isEmpty()) {
+                user.setEmail(userInfoUpdateRequest.getEmail());
+            }
+            if (userInfoUpdateRequest.getPhoneNumber() != null && !userInfoUpdateRequest.getPhoneNumber().isEmpty()) {
+                user.setPhoneNumber(userInfoUpdateRequest.getPhoneNumber());
+            }
+            if (userInfoUpdateRequest.getName() != null && !userInfoUpdateRequest.getName().isEmpty()) {
+                user.setName(userInfoUpdateRequest.getName());
+            }
+            if (userInfoUpdateRequest.getSurname() != null && !userInfoUpdateRequest.getSurname().isEmpty()) {
+                user.setSurname(userInfoUpdateRequest.getSurname());
+            }
 
             // Сохраняем в БД
             User updatedUser = userRepository.save(user);
@@ -247,7 +255,6 @@ public class UserService {
 
     public AuthResponse refreshAccessToken(RefreshRequest refreshRequest){
         Map<String, String> tokens = keycloakService.refreshToken(refreshRequest.getRefreshToken());
-
         return new AuthResponse(tokens.get("access_token"),tokens.get("refresh_token"),getUserIdFromToken(tokens.get("access_token")));
     }
 

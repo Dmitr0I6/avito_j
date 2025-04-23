@@ -13,9 +13,12 @@ import com.example.bulletinboard.request.AdvertisementRequest;
 import com.example.bulletinboard.request.AdvertisementUpdateRequest;
 import com.example.bulletinboard.response.AdvertisementResponse;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -75,8 +78,63 @@ public class AdvertisementService {
         return advertisement.map(advertisementMapper::toAdvertisementResponse).orElse(null);
     }
 
-    public void updateAdvertisement(Long id, AdvertisementUpdateRequest advertisementUpdateRequest, List<MultipartFile> images) {
+    @Transactional
+    public void updateAdvertisement(Long id, AdvertisementUpdateRequest advertisementUpdateRequest, List<MultipartFile> newImages) {
+        // Получаем текущего пользователя
+        User currentUser = userService.getCurrentUser();
 
+        // Находим объявление по ID
+        Advertisement advertisement = advertisementRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Advertisement not found with id: " + id));
+
+        // Проверяем, что текущий пользователь является автором объявления
+        if (!advertisement.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You can only update your own advertisements");
+        }
+
+        // Обновляем основные поля
+        if (advertisementUpdateRequest.getTitle() != null) {
+            advertisement.setTitle(advertisementUpdateRequest.getTitle());
+        }
+
+        if (advertisementUpdateRequest.getDescription() != null) {
+            advertisement.setDescription(advertisementUpdateRequest.getDescription());
+        }
+
+        if (advertisementUpdateRequest.getPrice() != advertisement.getPrice()) {
+            advertisement.setPrice(advertisementUpdateRequest.getPrice());
+        }
+
+        // Обновляем категорию, если она изменилась
+        if (advertisementUpdateRequest.getCategory() != null &&
+                !advertisementUpdateRequest.getCategory().equals(advertisement.getCategory().getId())) {
+            Category newCategory = categoryRepository.getReferenceById(advertisementUpdateRequest.getCategory());
+            advertisement.setCategory(newCategory);
+        }
+
+        // Обработка новых изображений
+        if (newImages != null && !newImages.isEmpty()) {
+            // Удаляем старые изображения из облака (если нужно)
+            // advertisement.getImages().forEach(img -> cloudinary.deleteImage(img.getUrl()));
+
+            // Загружаем новые изображения
+            List<String> newImageUrls = cloudinary.uploadImages(newImages);
+
+
+            // Добавляем новые изображения
+            for (String imageUrl : newImageUrls) {
+                Image image = new Image();
+                image.setUrl(imageUrl);
+                image.setAd(advertisement);
+                advertisement.addImage(image);
+            }
+        }
+
+        // Обновляем дату изменения
+        advertisement.setUpdatedAt(LocalDateTime.now());
+
+        // Сохраняем изменения
+        advertisementRepository.save(advertisement);
     }
     public void deleteAdvertisementById(Long id) {
         if (advertisementRepository.existsById(id)) {

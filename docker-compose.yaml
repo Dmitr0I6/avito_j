@@ -10,8 +10,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/javito
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      #
       KEYCLOAK_URL: http://keycloak:8080
+      RESOURCE_SERVER: http://keycloak:8080/realms/bulletin-board
       KEYCLOAK_REALM: bulletin-board
       KEYCLOAK_CLIENT_ID: spring-bulletin-board
       KEYCLOAK_CLIENT_SECRET: c9UotXvigAOObcNgIBLiAP2LtedQayVf
@@ -40,10 +40,10 @@ services:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KC_DB=postgres
-      - KC_DB_URL=jdbc:postgresql://postgres:5432/javito  # Используем имя сервиса
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/javito
       - KC_DB_USERNAME=postgres
       - KC_DB_PASSWORD=postgres
-      - KC_HOSTNAME=localhost
+
       - KC_DB_SCHEMA=public
       - KC_DB_INITIALIZE=true
       - KC_HTTP_ENABLED=true
@@ -52,7 +52,7 @@ services:
       - ./themes:/opt/keycloak/themes
     command: ["start-dev"]
     ports:
-      - "8080:8080"  # Лучше использовать стандартный порт
+      - "8080:8080"
     depends_on:
       - postgres
     restart: unless-stopped
@@ -62,5 +62,6 @@ services:
 volumes:
   postgres_data:
   keycloak_data:
+
 networks:
   my-network:
