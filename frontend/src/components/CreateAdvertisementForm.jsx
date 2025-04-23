@@ -8,8 +8,14 @@ import { useNavigate } from "react-router-dom";
 const schema = yup.object().shape({
     title: yup.string().required("Название обязательно"),
     description: yup.string().required("Описание обязательно"),
-    categoryId: yup.number().required("Категория обязательна").positive(),
-    price: yup.number().required("Цена обязательна").positive(),
+    categoryId: yup.number()
+        .typeError('Категория должна быть числом')
+        .required("Категория обязательна")
+        .positive(),
+    price: yup.number()
+        .typeError('Цена должна быть числом')
+        .required("Цена обязательна")
+        .positive(),
 });
 
 export default function CreateAdvertisementForm() {
@@ -89,7 +95,7 @@ export default function CreateAdvertisementForm() {
             const formData = new FormData();
             formData.append("title", data.title);
             formData.append("description", data.description);
-            formData.append("categoryId", data.categoryId);
+            formData.append("categoryId", Number(data.categoryId));
             formData.append("price", data.price);
             formData.append("userId", currentUser.id);
 

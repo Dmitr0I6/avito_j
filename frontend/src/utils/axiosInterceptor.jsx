@@ -35,12 +35,12 @@ export const setupAxiosInterceptors = (logoutCallback) => {
         async error => {
             const originalRequest = error.config;
 
-            // Проверяем, что это ошибка 401 и запрос не публичный
-            const isPublicEndpoint = PUBLIC_ENDPOINTS.some(endpoint =>
-                originalRequest.url.includes(endpoint)
-            );
+            // // Проверяем, что это ошибка 401 и запрос не публичный
+            // const isPublicEndpoint = PUBLIC_ENDPOINTS.some(endpoint =>
+            //     originalRequest.url.includes(endpoint)
+            // );
 
-            if (error.response?.status === 401 && !isPublicEndpoint && !originalRequest._retry) {
+            if (error.response?.status === 401  && !originalRequest._retry) {
                 originalRequest._retry = true;
 
                 try {
